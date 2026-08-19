@@ -8,8 +8,8 @@
   position: absolute;
   inset: -20% -10% auto -10%;
   height: 600px;
-  background: radial-gradient(60% 60% at 30% 20%, rgba(61, 107, 255, 0.28), transparent 70%),
-    radial-gradient(45% 45% at 80% 10%, rgba(95, 212, 255, 0.16), transparent 70%);
+  background: radial-gradient(60% 60% at 30% 20%, rgba(201, 125, 74, 0.22), transparent 70%),
+    radial-gradient(45% 45% at 80% 10%, rgba(143, 163, 151, 0.18), transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -53,7 +53,7 @@
   flex-wrap: wrap;
 }
 
-/* Signature element: orbiting nodes around a glowing core */
+/* Signature element: a branch drawing itself, tracing how one idea forks into many */
 .hero__visual {
   position: relative;
   height: 360px;
@@ -62,86 +62,94 @@
   justify-content: center;
 }
 
-.core {
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--cyan-glow), var(--blue-accent) 65%, transparent 100%);
-  box-shadow: 0 0 60px 10px rgba(61, 107, 255, 0.55);
+.branch-art {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  overflow: visible;
 }
 
-.orbit {
-  position: absolute;
-  border: 1px solid var(--border-soft);
-  border-radius: 50%;
-  animation: spin 22s linear infinite;
+.branch-line {
+  fill: none;
+  stroke-dasharray: 340;
+  stroke-dashoffset: 340;
+  animation: draw 2.6s ease-out forwards;
 }
 
-.orbit--outer {
-  width: 340px;
-  height: 340px;
+.branch-line--1 {
+  animation-delay: 0.1s;
 }
 
-.orbit--inner {
-  width: 200px;
-  height: 200px;
-  animation-duration: 15s;
-  animation-direction: reverse;
+.branch-line--2 {
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  animation-delay: 0.5s;
 }
 
-.node {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--white);
-  box-shadow: 0 0 14px 3px rgba(95, 212, 255, 0.7);
+.branch-line--3 {
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation-delay: 1.1s;
 }
 
-.node--1 {
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%);
+.branch-line--4 {
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation-delay: 1.3s;
 }
 
-.node--2 {
-  bottom: 30px;
-  right: 10px;
-  width: 8px;
-  height: 8px;
+.branch-dot {
+  fill: var(--blue-accent-bright);
+  opacity: 0;
+  animation: bloom 0.6s ease-out forwards;
+  transform-origin: center;
+  transform-box: fill-box;
 }
 
-.node--3 {
-  bottom: 60px;
-  left: 0;
-  width: 9px;
-  height: 9px;
+.branch-dot--1 {
+  animation-delay: 1.4s;
 }
 
-.node--4 {
-  top: 10px;
-  right: 20px;
-  width: 7px;
-  height: 7px;
+.branch-dot--2 {
+  animation-delay: 1.7s;
 }
 
-.node--5 {
-  bottom: -5px;
-  left: 40%;
+.branch-dot--3 {
+  animation-delay: 1.9s;
 }
 
-@keyframes spin {
+.branch-dot--4 {
+  animation-delay: 2.1s;
+}
+
+.branch-dot--5 {
+  fill: var(--white);
+  animation-delay: 0.1s;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes bloom {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: scale(0.3);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .orbit {
+  .branch-line,
+  .branch-dot {
     animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
   }
 }
 
@@ -259,14 +267,8 @@
     order: -1;
   }
 
-  .orbit--outer {
-    width: 240px;
-    height: 240px;
-  }
-
-  .orbit--inner {
-    width: 150px;
-    height: 150px;
+  .branch-art {
+    max-width: 260px;
   }
 
   .feature-grid {

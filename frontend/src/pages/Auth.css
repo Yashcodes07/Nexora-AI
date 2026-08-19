@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: 64px 24px;
-  background: radial-gradient(60% 50% at 50% 0%, rgba(61, 107, 255, 0.14), transparent 70%);
+  background: radial-gradient(60% 50% at 50% 0%, rgba(201, 125, 74, 0.14), transparent 70%);
 }
 
 .auth__card {
@@ -98,8 +98,8 @@
 }
 
 .auth__success {
-  background: rgba(95, 212, 255, 0.08);
-  border: 1px solid rgba(95, 212, 255, 0.3);
+  background: rgba(226, 160, 106, 0.1);
+  border: 1px solid rgba(226, 160, 106, 0.3);
   color: var(--slate-300);
   font-size: 0.88rem;
   line-height: 1.5;

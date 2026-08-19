@@ -27,8 +27,8 @@ export default function Navbar() {
               />
               <defs>
                 <linearGradient id="brandGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#5fd4ff" />
-                  <stop offset="1" stopColor="#3d6bff" />
+                  <stop stopColor="#e2a06a" />
+                  <stop offset="1" stopColor="#c97d4a" />
                 </linearGradient>
               </defs>
             </svg>
