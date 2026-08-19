@@ -1,0 +1,19 @@
+.notfound {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 100px 24px;
+}
+
+.notfound__title {
+  font-size: 2rem;
+  color: var(--white);
+}
+
+.notfound__body {
+  margin-bottom: 12px;
+}
