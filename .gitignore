@@ -1,15 +1,76 @@
 # Frontend dependencies
 frontend/node_modules/
 .DS_Store
-# Environment variables
+
+# Frontend environment variables
 frontend/.env
 frontend/.env.local
 frontend/.env.*.local
 
-# Build files
+# Frontend build files
 frontend/dist/
 frontend/build/
 
-# Logs
+# Frontend logs
 frontend/npm-debug.log*
 frontend/yarn-debug.log*
+
+# Backend - Python
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.py[cod]
+backend/*$py.class
+
+# Backend - virtual environments
+backend/venv/
+backend/env/
+backend/.venv/
+backend/ENV/
+
+# Backend - environment variables
+backend/.env
+backend/.env.local
+backend/.env.*.local
+
+# Backend - package managers
+backend/*.egg-info/
+backend/dist/
+backend/build/
+backend/pip-log.txt
+backend/pip-delete-this-directory.txt
+
+# Backend - Alembic (if using for migrations, keep versions/ tracked, ignore local overrides)
+backend/alembic.ini.local
+
+# Backend - PostgreSQL / DB
+backend/*.sqlite
+backend/*.sqlite3
+backend/*.db
+backend/pgdata/
+backend/postgres-data/
+
+# Backend - logs
+backend/logs/
+backend/*.log
+
+# Backend - uploads / generated files
+backend/uploads/
+backend/tmp/
+backend/media/
+
+# Backend - testing / coverage
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.tox/
+backend/.mypy_cache/
+backend/.ruff_cache/
+
+# Backend - Jupyter (if used for exploration)
+backend/.ipynb_checkpoints/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+Thumbs.db
