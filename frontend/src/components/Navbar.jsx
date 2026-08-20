@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import "./Navbar.css";
 
 const NAV_LINKS = [
@@ -10,6 +11,34 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    setOpen(false);
+    navigate("/");
+  };
+
+  const authActions = user ? (
+    <>
+      <Link to="/account" className="btn btn-ghost" onClick={() => setOpen(false)}>
+        Account
+      </Link>
+      <button type="button" className="btn btn-primary" onClick={handleLogout}>
+        Log out
+      </button>
+    </>
+  ) : (
+    <>
+      <Link to="/login" className="btn btn-ghost" onClick={() => setOpen(false)}>
+        Log in
+      </Link>
+      <Link to="/signup" className="btn btn-primary" onClick={() => setOpen(false)}>
+        Sign up
+      </Link>
+    </>
+  );
 
   return (
     <header className="navbar">
@@ -51,22 +80,12 @@ export default function Navbar() {
             </NavLink>
           ))}
           <div className="navbar__actions navbar__actions--mobile">
-            <Link to="/login" className="btn btn-ghost" onClick={() => setOpen(false)}>
-              Log in
-            </Link>
-            <Link to="/signup" className="btn btn-primary" onClick={() => setOpen(false)}>
-              Sign up
-            </Link>
+            {authActions}
           </div>
         </nav>
 
         <div className="navbar__actions navbar__actions--desktop">
-          <Link to="/login" className="btn btn-ghost">
-            Log in
-          </Link>
-          <Link to="/signup" className="btn btn-primary">
-            Sign up
-          </Link>
+          {authActions}
         </div>
 
         <button

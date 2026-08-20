@@ -1,19 +1,34 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import "./Auth.css";
 
 export default function Signup() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const { user, loading, signup } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError("");
+    setSubmitting(true);
+    try {
+      await signup({ full_name: form.name, email: form.email, password: form.password });
+      navigate("/account", { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (!loading && user) return <Navigate to="/account" replace />;
 
   return (
     <div className="auth">
@@ -22,13 +37,8 @@ export default function Signup() {
         <h1 className="auth__title">Create your account</h1>
         <p className="auth__subtitle">Free to start, no credit card required.</p>
 
-        {submitted ? (
-          <div className="auth__success">
-            This is a UI preview, no account was created. Wire this form up to your auth API when
-            you're ready.
-          </div>
-        ) : (
-          <form className="auth__form" onSubmit={handleSubmit}>
+        {error && <div className="auth__error" role="alert">{error}</div>}
+        <form className="auth__form" onSubmit={handleSubmit}>
             <label className="field">
               <span>Full name</span>
               <input
@@ -65,11 +75,10 @@ export default function Signup() {
               />
             </label>
 
-            <button type="submit" className="btn btn-primary btn-block">
-              Create account
+            <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
+              {submitting ? "Creating account…" : "Create account"}
             </button>
           </form>
-        )}
 
         <p className="auth__footer">
           Already have an account? <Link to="/login">Log in</Link>

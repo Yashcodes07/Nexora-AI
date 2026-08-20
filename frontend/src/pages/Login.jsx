@@ -1,19 +1,36 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import "./Auth.css";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
-  const [submitted, setSubmitted] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const { user, loading, login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError("");
+    setSubmitting(true);
+    try {
+      await login(form, remember);
+      navigate(location.state?.from?.pathname || "/account", { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (!loading && user) return <Navigate to="/account" replace />;
 
   return (
     <div className="auth">
@@ -22,13 +39,8 @@ export default function Login() {
         <h1 className="auth__title">Log in to Nexora AI</h1>
         <p className="auth__subtitle">Pick up right where you left off.</p>
 
-        {submitted ? (
-          <div className="auth__success">
-            This is a UI preview, no account was created or signed in. Wire this form up to your
-            auth API when you're ready.
-          </div>
-        ) : (
-          <form className="auth__form" onSubmit={handleSubmit}>
+        {error && <div className="auth__error" role="alert">{error}</div>}
+        <form className="auth__form" onSubmit={handleSubmit}>
             <label className="field">
               <span>Email</span>
               <input
@@ -55,7 +67,11 @@ export default function Login() {
 
             <div className="auth__row">
               <label className="checkbox">
-                <input type="checkbox" />
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                />
                 <span>Remember me</span>
               </label>
               <a href="#forgot" className="auth__link">
@@ -63,11 +79,10 @@ export default function Login() {
               </a>
             </div>
 
-            <button type="submit" className="btn btn-primary btn-block">
-              Log in
+            <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
+              {submitting ? "Logging in…" : "Log in"}
             </button>
           </form>
-        )}
 
         <p className="auth__footer">
           Don&apos;t have an account? <Link to="/signup">Sign up</Link>
