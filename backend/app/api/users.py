@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_active_user
-from app.crud.user import update_user
+from app.crud.user import update_learning_preferences, update_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.user import UserOut, UserUpdate
+from app.schemas.user import LearningPreferencesUpdate, UserOut, UserUpdate
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -22,3 +22,12 @@ def update_current_user(
     current_user: User = Depends(get_current_active_user),
 ):
     return update_user(db, current_user, user_in)
+
+
+@router.put("/me/preferences", response_model=UserOut)
+def set_learning_preferences(
+    preferences: LearningPreferencesUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    return update_learning_preferences(db, current_user, preferences)

@@ -27,17 +27,29 @@ services:
       DATABASE_URL: postgresql://nexora-ai:nexora-ai@postgres:5432/nexora-ai
       SECRET_KEY: ${SECRET_KEY:-change-this-secret-before-production}
       BACKEND_CORS_ORIGINS: '["http://localhost:3000"]'
+      FRONTEND_URL: http://localhost:3000
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
     ports:
       - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"
+      - "1025:1025"
     restart: unless-stopped
 
   frontend:

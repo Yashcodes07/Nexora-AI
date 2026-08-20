@@ -9,6 +9,8 @@ import Signup from "./pages/Signup.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import Account from "./pages/Account.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 
 export default function App() {
   return (
@@ -21,6 +23,8 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/account"
             element={

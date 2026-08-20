@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
+import hashlib
+import secrets
 
 from jose import jwt, JWTError
 from passlib.context import CryptContext
@@ -39,3 +41,12 @@ def decode_token(token: str) -> Optional[dict]:
         return payload
     except JWTError:
         return None
+
+
+def create_password_reset_token() -> tuple[str, str]:
+    token = secrets.token_urlsafe(32)
+    return token, hash_password_reset_token(token)
+
+
+def hash_password_reset_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()

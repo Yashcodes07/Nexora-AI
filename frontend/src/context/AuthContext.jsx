@@ -57,13 +57,25 @@ export function AuthProvider({ children }) {
     return login({ email: input.email, password: input.password }, true);
   }
 
+  async function saveLearningPreferences(preferences) {
+    const updatedUser = await authenticatedRequest("/api/users/me/preferences", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(preferences),
+    });
+    setUser(updatedUser);
+    return updatedUser;
+  }
+
   function logout() {
     clearTokens();
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, signup, logout, saveLearningPreferences }}
+    >
       {children}
     </AuthContext.Provider>
   );

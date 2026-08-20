@@ -58,6 +58,24 @@ export async function loginUser(credentials) {
   return parseResponse(response);
 }
 
+export async function requestPasswordReset(email) {
+  const response = await fetch("/api/auth/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return parseResponse(response);
+}
+
+export async function resetPassword(token, password) {
+  const response = await fetch("/api/auth/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, password }),
+  });
+  return parseResponse(response);
+}
+
 async function refreshAccessToken(tokens) {
   const response = await fetch("/api/auth/refresh", {
     method: "POST",
