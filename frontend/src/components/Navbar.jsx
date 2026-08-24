@@ -51,24 +51,7 @@ export default function Navbar() {
     <header className="navbar">
       <div className="container navbar__inner">
         <Link to="/" className="navbar__brand" onClick={() => setOpen(false)}>
-          <span className="navbar__mark" aria-hidden="true">
-            <svg viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="16" r="15" stroke="url(#brandGrad)" strokeWidth="1.5" />
-              <path
-                d="M10 21V11l12 10V11"
-                stroke="url(#brandGrad)"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <defs>
-                <linearGradient id="brandGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#e2a06a" />
-                  <stop offset="1" stopColor="#c97d4a" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </span>
+          <span className="navbar__mark" aria-hidden="true"><img src="/nexora-mark.png" alt="" /></span>
           <span className="navbar__name">
             Nexora <span className="navbar__name-accent">AI</span>
           </span>

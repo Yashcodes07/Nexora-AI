@@ -6,10 +6,8 @@ export default function Footer() {
     <footer className="footer">
       <div className="container footer__inner">
         <div className="footer__brand">
-          <span className="footer__name">
-            Nexora <span className="navbar__name-accent">AI</span>
-          </span>
-          <p className="footer__tag">Intelligent tools for a faster workflow.</p>
+          <img className="footer__logo" src="/nexora-logo.png" alt="Nexora AI" />
+          <p className="footer__tag">A thoughtful space to learn, plan and grow.</p>
         </div>
 
         <nav className="footer__links">

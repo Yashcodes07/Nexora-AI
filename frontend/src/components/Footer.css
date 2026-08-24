@@ -18,6 +18,7 @@
   font-weight: 600;
   color: var(--white);
 }
+.footer__logo { display: block; width: 176px; height: 58px; object-fit: contain; object-position: left center; border-radius: 7px; }
 
 .footer__tag {
   font-size: 0.85rem;

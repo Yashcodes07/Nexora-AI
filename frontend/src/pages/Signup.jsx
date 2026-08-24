@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import "./Auth.css";
 
@@ -9,6 +9,8 @@ export default function Signup() {
   const [submitting, setSubmitting] = useState(false);
   const { user, loading, signup } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const requestedPath = location.state?.from?.pathname;
 
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -20,7 +22,7 @@ export default function Signup() {
     setSubmitting(true);
     try {
       await signup({ full_name: form.name, email: form.email, password: form.password });
-      navigate("/preferences", { replace: true });
+      navigate(requestedPath || "/preferences", { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -28,7 +30,7 @@ export default function Signup() {
     }
   };
 
-  if (!loading && user) return <Navigate to={user.learning_preferences ? "/learning-space" : "/preferences"} replace />;
+  if (!loading && user) return <Navigate to={requestedPath || (user.learning_preferences ? "/learning-space" : "/preferences")} replace />;
 
   return (
     <div className="auth">
@@ -81,7 +83,7 @@ export default function Signup() {
           </form>
 
         <p className="auth__footer">
-          Already have an account? <Link to="/login">Log in</Link>
+          Already have an account? <Link to="/login" state={location.state}>Log in</Link>
         </p>
       </div>
     </div>

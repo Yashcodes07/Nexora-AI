@@ -11,6 +11,7 @@ export default function Login() {
   const { user, loading, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const requestedPath = location.state?.from?.pathname;
 
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -23,7 +24,7 @@ export default function Login() {
     try {
       const currentUser = await login(form, remember);
       const destination = currentUser.learning_preferences?.neurodivergent_profiles?.length ? "/learning-space" : "/preferences";
-      navigate(location.state?.from?.pathname || destination, { replace: true });
+      navigate(requestedPath || destination, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -31,7 +32,7 @@ export default function Login() {
     }
   };
 
-  if (!loading && user) return <Navigate to={user.learning_preferences ? "/learning-space" : "/preferences"} replace />;
+  if (!loading && user) return <Navigate to={requestedPath || (user.learning_preferences ? "/learning-space" : "/preferences")} replace />;
 
   return (
     <div className="auth">
@@ -86,7 +87,7 @@ export default function Login() {
           </form>
 
         <p className="auth__footer">
-          Don&apos;t have an account? <Link to="/signup">Sign up</Link>
+          Don&apos;t have an account? <Link to="/signup" state={location.state}>Sign up</Link>
         </p>
       </div>
     </div>
