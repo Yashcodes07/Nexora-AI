@@ -9,6 +9,36 @@ const INITIAL_EVENTS = [
   { id: 3, dayOffset: 0, time: "17:00", title: "ML Assignment", duration: "45 min", category: "Study", color: "study" },
 ];
 
+const asText = (value, fallback = "") => typeof value === "string" && value.trim() ? value.trim() : fallback;
+
+function normalizePlan(result, fallbackPrompt, fallbackDeadline, fallbackPurpose, currentEvents) {
+  const source = result && typeof result === "object" && !Array.isArray(result) ? result : {};
+  const raw = source.understood && typeof source.understood === "object" && !Array.isArray(source.understood) ? source.understood : {};
+  const rawConstraints = Array.isArray(raw.constraints) ? raw.constraints : raw.constraints ? [raw.constraints] : [];
+  const constraints = rawConstraints.map((item) => asText(item)).filter(Boolean);
+  const events = (Array.isArray(source.events) ? source.events : currentEvents)
+    .filter((item) => item && typeof item === "object" && !Array.isArray(item))
+    .map((item, index) => ({
+      id: item.id ?? Date.now() + index,
+      dayOffset: Number.isInteger(Number(item.dayOffset)) ? Math.min(6, Math.max(0, Number(item.dayOffset))) : 0,
+      time: /^([01]\d|2[0-3]):[0-5]\d$/.test(item.time) ? item.time : "19:00",
+      title: asText(item.title, "Focused work session"),
+      duration: asText(item.duration, "30 min"),
+      category: asText(item.category, "Study"),
+    }));
+  return {
+    understood: {
+      type: asText(raw.type, "Study goal"),
+      date: asText(raw.deadline ?? raw.date, fallbackDeadline || "Flexible"),
+      goal: asText(raw.title ?? raw.goal, fallbackPrompt),
+      constraints: constraints.length ? constraints : [asText(raw.purpose, fallbackPurpose || "Keep sessions manageable")],
+    },
+    events,
+    operation: ["create", "update", "remove", "replace"].includes(source.operation) ? source.operation : "update",
+    clarification: asText(source.clarification_question),
+  };
+}
+
 function understandPrompt(prompt) {
   const lower = prompt.toLowerCase();
   const isExam = /exam|gate|test/.test(lower);
@@ -44,6 +74,7 @@ export default function AIScheduler() {
   const [plannerHistory, setPlannerHistory] = useState([]);
   const [planOperation, setPlanOperation] = useState("create");
   const [clarification, setClarification] = useState("");
+  const [plannerError, setPlannerError] = useState("");
   const promptRef = useRef(null);
   const today = new Date();
   const firstName = (user.full_name || user.email.split("@")[0]).split(" ")[0];
@@ -61,17 +92,22 @@ export default function AIScheduler() {
   async function analyse(event) {
     event.preventDefault();
     if (!prompt.trim()) return;
-    setPlanning(true); setScheduled(false);
+    setPlanning(true); setScheduled(false); setPlannerError("");
     try {
       const request = prompt.trim();
       const result = await planSchedule(request, deadline || null, purpose || null, plannerHistory, events);
-      const item = result.understood || {};
-      setUnderstood({ type: item.type || "Study goal", date: item.deadline || deadline || "Flexible", goal: item.title || item.goal || prompt.trim(), constraints: item.constraints?.length ? item.constraints : [item.purpose || purpose || "Flexible plan"] });
-      setPlannedEvents(result.events || []);
-      setPlanOperation(result.operation || "update");
-      setClarification(result.clarification_question || "");
+      const plan = normalizePlan(result, request, deadline, purpose, events);
+      setUnderstood(plan.understood);
+      setPlannedEvents(plan.events);
+      setPlanOperation(plan.operation);
+      setClarification(plan.clarification);
       setPlannerHistory((current) => [...current, { role: "user", content: request }, { role: "assistant", content: JSON.stringify({ understood: result.understood, operation: result.operation, clarification_question: result.clarification_question, events: result.events }) }].slice(-30));
-    } catch { setUnderstood(understandPrompt(prompt.trim())); setPlannedEvents([]); }
+    } catch (error) {
+      setUnderstood(understandPrompt(prompt.trim()));
+      setPlannedEvents([]);
+      setClarification("");
+      setPlannerError(error.message || "Nexora could not generate the plan. Please try again.");
+    }
     finally { setPlanning(false); }
   }
 
@@ -102,8 +138,9 @@ export default function AIScheduler() {
 
       <section className="planner-card">
         <div className="planner-card__intro"><span className="planner-card__mark"><img src="/nexora-mark.png" alt="" /></span><div><span className="scheduler__eyebrow">Let Nexora plan it for you</span><h2>Describe your goal in your own words.</h2></div></div>
-        <form onSubmit={analyse} className="planner-prompt"><textarea ref={promptRef} rows="3" value={prompt} onChange={(event) => { setPrompt(event.target.value); setUnderstood(null); setScheduled(false); }} placeholder="I have a math exam on September 15. I need to finish 6 chapters and want Sundays free." /><div className="planner-details"><label><span>Deadline</span><input value={deadline} onChange={(event) => setDeadline(event.target.value)} placeholder="e.g. September 15" /></label><label><span>Purpose</span><input value={purpose} onChange={(event) => setPurpose(event.target.value)} placeholder="e.g. Prepare for my exam" /></label></div><button type="submit" disabled={!prompt.trim() || planning}>{planning ? "Planning…" : "Plan my schedule"} <span>→</span></button></form>
-        {understood && <div className="understood"><div className="understood__heading"><div><span>Understood</span><h3>{clarification || "I’ll plan around these details"}</h3></div>{scheduled && <strong className="understood__success">Schedule updated</strong>}</div><div className="understood__facts"><div><span>Type</span><strong>{understood.type}</strong></div><div><span>Date / time</span><strong>{understood.date}</strong></div><div><span>Goal</span><strong>{understood.goal}</strong></div><div><span>Constraint</span><strong>{understood.constraints.join(" · ")}</strong></div></div><p>{clarification ? "Add the missing detail in the prompt above, then ask Nexora to continue." : "Review the generated sessions, then apply the revised plan."}</p><button type="button" onClick={createSchedule} disabled={scheduled || Boolean(clarification)}>{scheduled ? "Plan updated" : clarification ? "Waiting for details" : "Apply schedule"} <span>{scheduled ? "✓" : "→"}</span></button></div>}
+        <form onSubmit={analyse} className="planner-prompt"><textarea ref={promptRef} rows="3" value={prompt} onChange={(event) => { setPrompt(event.target.value); setUnderstood(null); setScheduled(false); setPlannerError(""); }} placeholder="I have a math exam on September 15. I need to finish 6 chapters and want Sundays free." /><div className="planner-details"><label><span>Deadline</span><input value={deadline} onChange={(event) => setDeadline(event.target.value)} placeholder="e.g. September 15" /></label><label><span>Purpose</span><input value={purpose} onChange={(event) => setPurpose(event.target.value)} placeholder="e.g. Prepare for my exam" /></label></div><button type="submit" disabled={!prompt.trim() || planning}>{planning ? "Planning…" : "Plan my schedule"} <span>→</span></button></form>
+        {plannerError && <div className="planner-error" role="alert">{plannerError}</div>}
+        {understood && <div className="understood"><div className="understood__heading"><div><span>Understood</span><h3>{clarification || "I’ll plan around these details"}</h3></div>{scheduled && <strong className="understood__success">Schedule updated</strong>}</div><div className="understood__facts"><div><span>Type</span><strong>{understood.type}</strong></div><div><span>Date / time</span><strong>{understood.date}</strong></div><div><span>Goal</span><strong>{understood.goal}</strong></div><div><span>Constraint</span><strong>{(understood.constraints || []).join(" · ") || "Flexible"}</strong></div></div><p>{clarification ? "Add the missing detail in the prompt above, then ask Nexora to continue." : "Review the generated sessions, then apply the revised plan."}</p><button type="button" onClick={createSchedule} disabled={scheduled || Boolean(clarification)}>{scheduled ? "Plan updated" : clarification ? "Waiting for details" : "Apply schedule"} <span>{scheduled ? "✓" : "→"}</span></button></div>}
       </section>
     </main></div>
   );
