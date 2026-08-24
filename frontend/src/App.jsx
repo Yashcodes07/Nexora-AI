@@ -11,11 +11,11 @@ import Account from "./pages/Account.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
-import { FeatureDashboard } from "./pages/Dashboard.jsx";
 import Settings from "./pages/Settings.jsx";
 import PreferencesOnboarding from "./pages/PreferencesOnboarding.jsx";
 import LearningSpace from "./pages/LearningSpace.jsx";
 import Wellbeing from "./pages/Wellbeing.jsx";
+import AIScheduler from "./pages/AIScheduler.jsx";
 
 export default function App() {
   const location = useLocation();
@@ -35,7 +35,7 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/learning-space" element={protectedPage(<LearningSpace />)} />
           <Route path="/wellbeing" element={protectedPage(<Wellbeing />)} />
-          <Route path="/ai-scheduler" element={protectedPage(<FeatureDashboard section="ai-scheduler" />)} />
+          <Route path="/ai-scheduler" element={protectedPage(<AIScheduler />)} />
           <Route path="/settings" element={protectedPage(<Settings />)} />
           <Route path="/preferences" element={protectedPage(<PreferencesOnboarding />)} />
           <Route
