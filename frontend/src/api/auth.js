@@ -113,3 +113,8 @@ export async function authenticatedRequest(path, options = {}) {
 
   return parseResponse(response);
 }
+
+export function getDashboardSection(section = "") {
+  const suffix = section ? `/${section}` : "";
+  return authenticatedRequest(`/api/dashboard${suffix}`);
+}

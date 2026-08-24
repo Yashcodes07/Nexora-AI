@@ -172,6 +172,8 @@
 .account__card {
   max-width: 760px;
 }
+.dashboard .account__card { max-width: 1200px; }
+.account__hero { display: flex; align-items: center; gap: 22px; margin-bottom: 32px; }.account__avatar { display: grid; place-items: center; flex: 0 0 76px; width: 76px; height: 76px; border-radius: 50%; border: 1px solid var(--blue-accent); background: rgba(201,125,74,.12); color: var(--blue-accent-bright); font-family: var(--font-display); font-size: 2rem; }
 
 .preferences__form {
   display: grid;

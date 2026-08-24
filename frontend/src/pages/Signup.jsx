@@ -20,7 +20,7 @@ export default function Signup() {
     setSubmitting(true);
     try {
       await signup({ full_name: form.name, email: form.email, password: form.password });
-      navigate("/account", { replace: true });
+      navigate("/preferences", { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -28,7 +28,7 @@ export default function Signup() {
     }
   };
 
-  if (!loading && user) return <Navigate to="/account" replace />;
+  if (!loading && user) return <Navigate to={user.learning_preferences ? "/learning-space" : "/preferences"} replace />;
 
   return (
     <div className="auth">

@@ -8,6 +8,12 @@ const NAV_LINKS = [
   { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },
 ];
+const APP_LINKS = [
+  { label: "Learning Space", to: "/learning-space" },
+  { label: "Wellbeing", to: "/wellbeing" },
+  { label: "AI Scheduler", to: "/ai-scheduler" },
+  { label: "Settings", to: "/settings" },
+];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -22,10 +28,11 @@ export default function Navbar() {
 
   const authActions = user ? (
     <>
-      <Link to="/account" className="btn btn-ghost" onClick={() => setOpen(false)}>
-        Account
+      <Link to="/account" className="navbar__profile" onClick={() => setOpen(false)}>
+        <span>{(user.full_name || user.email)[0].toUpperCase()}</span>
+        <span className="navbar__profile-copy"><b>{user.full_name || "My profile"}</b><small>View profile</small></span>
       </Link>
-      <button type="button" className="btn btn-primary" onClick={handleLogout}>
+      <button type="button" className="btn btn-ghost navbar__logout" onClick={handleLogout}>
         Log out
       </button>
     </>
@@ -68,7 +75,7 @@ export default function Navbar() {
         </Link>
 
         <nav className={`navbar__links ${open ? "is-open" : ""}`}>
-          {NAV_LINKS.map((link) => (
+          {(user ? APP_LINKS : NAV_LINKS).map((link) => (
             <NavLink
               key={link.to}
               to={link.to}

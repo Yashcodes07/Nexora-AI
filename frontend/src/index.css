@@ -75,9 +75,13 @@ img {
 
 .container {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1480px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 32px;
+}
+
+@media (max-width: 640px) {
+  .container { padding-inline: 18px; }
 }
 
 /* Buttons */

@@ -67,6 +67,16 @@ export function AuthProvider({ children }) {
     return updatedUser;
   }
 
+  async function updateAccount(changes) {
+    const updatedUser = await authenticatedRequest("/api/users/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(changes),
+    });
+    setUser(updatedUser);
+    return updatedUser;
+  }
+
   function logout() {
     clearTokens();
     setUser(null);
@@ -74,7 +84,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, signup, logout, saveLearningPreferences }}
+      value={{ user, loading, login, signup, logout, saveLearningPreferences, updateAccount }}
     >
       {children}
     </AuthContext.Provider>

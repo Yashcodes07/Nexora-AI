@@ -12,7 +12,7 @@ const INITIAL_PREFERENCES = {
   neurodivergent_profiles: [],
 };
 
-export default function LearningPreferences({ initialPreferences = null, onCancel = null }) {
+export default function LearningPreferences({ initialPreferences = null, onCancel = null, onComplete = null }) {
   const [preferences, setPreferences] = useState(() =>
     initialPreferences
       ? { ...INITIAL_PREFERENCES, ...initialPreferences }
@@ -78,7 +78,8 @@ export default function LearningPreferences({ initialPreferences = null, onCance
     setSubmitting(true);
     try {
       await saveLearningPreferences(preferences);
-      onCancel?.();
+      if (onComplete) onComplete();
+      else onCancel?.();
     } catch (err) {
       setError(err.message);
     } finally {

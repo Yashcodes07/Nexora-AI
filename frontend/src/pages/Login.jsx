@@ -21,8 +21,9 @@ export default function Login() {
     setError("");
     setSubmitting(true);
     try {
-      await login(form, remember);
-      navigate(location.state?.from?.pathname || "/account", { replace: true });
+      const currentUser = await login(form, remember);
+      const destination = currentUser.learning_preferences?.neurodivergent_profiles?.length ? "/learning-space" : "/preferences";
+      navigate(location.state?.from?.pathname || destination, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -30,7 +31,7 @@ export default function Login() {
     }
   };
 
-  if (!loading && user) return <Navigate to="/account" replace />;
+  if (!loading && user) return <Navigate to={user.learning_preferences ? "/learning-space" : "/preferences"} replace />;
 
   return (
     <div className="auth">
