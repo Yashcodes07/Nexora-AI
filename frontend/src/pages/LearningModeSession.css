@@ -1,0 +1,315 @@
+.conversation-mode,
+.mode-report {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  min-height: 100vh;
+  overflow: auto;
+  background: #0d1d16;
+}
+.conversation-mode {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  max-width: 920px;
+  margin: auto;
+  padding: 24px;
+}
+.conversation-mode > header {
+  display: grid;
+  grid-template-columns: 100px 1fr 100px;
+  align-items: center;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: center;
+}
+.conversation-mode button,
+.mode-report > button {
+  border: 0;
+  background: transparent;
+  color: var(--slate-400);
+}
+.conversation-mode header span,
+.mode-kicker {
+  color: var(--blue-accent-bright);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.conversation-mode header h1 {
+  margin-top: 3px;
+  font-size: 1.2rem;
+}
+.conversation-mode header small {
+  text-align: right;
+  color: var(--slate-500);
+}
+.conversation-mode main {
+  overflow: auto;
+  padding: 25px 8%;
+}
+.conversation-purpose {
+  margin-bottom: 25px;
+  color: var(--slate-500);
+  font-size: 0.7rem;
+  text-align: center;
+}
+.mode-message {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+}
+.mode-message > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  height: 30px;
+  border: 1px solid var(--border-soft);
+  border-radius: 50%;
+  color: var(--blue-accent-bright);
+  font-size: 0.65rem;
+}
+.mode-message p {
+  max-width: 75%;
+  padding: 11px 14px;
+  border-radius: 13px;
+  background: #1b3529;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+.mode-message--you {
+  justify-content: flex-end;
+}
+.mode-message--you > span {
+  order: 2;
+}
+.mode-message--you p {
+  background: rgba(201, 125, 74, 0.16);
+}
+.conversation-mode > form {
+  padding: 6px;
+  border: 1px solid rgba(226, 160, 106, 0.25);
+  border-radius: 13px;
+  background: #10231b;
+}
+.conversation-mode textarea {
+  width: 100%;
+  padding: 11px;
+  resize: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--white);
+}
+.conversation-mode form > div {
+  display: flex;
+  justify-content: space-between;
+}
+.conversation-mode form button[type="submit"],
+.mode-primary,
+.test-next {
+  padding: 8px 13px !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  background: var(--blue-accent) !important;
+  color: #102019 !important;
+  font-weight: 700;
+}
+.voice-button {
+  font-size: 0.68rem;
+}
+.finish-session {
+  margin: 8px auto !important;
+  font-size: 0.65rem;
+}
+.mode-report {
+  padding: 70px max(24px, calc((100% - 760px) / 2));
+}
+.mode-report h1 {
+  margin: 20px 0 30px;
+  font-size: 2.4rem;
+}
+.report-score strong,
+.report-score span {
+  display: block;
+}
+.report-score strong {
+  font: 3rem var(--font-display);
+  color: var(--blue-accent-bright);
+}
+.report-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin: 28px 0;
+}
+.report-grid section {
+  padding: 20px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.report-grid h2 {
+  margin-bottom: 12px;
+}
+.report-grid p {
+  margin: 7px 0;
+  font-size: 0.78rem;
+}
+.test-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  overflow: auto;
+  padding: 30px;
+  background: #0b1712;
+}
+.test-exit,
+.test-result > button {
+  align-self: flex-end;
+  border: 0;
+  background: transparent;
+  color: var(--slate-400);
+}
+.test-screen > header {
+  text-align: center;
+}
+.test-screen > header span,
+.test-result > span {
+  color: var(--blue-accent-bright);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+.test-screen > header h1 {
+  margin: 12px 0 5px;
+  font-size: 1.7rem;
+}
+.test-screen > header p {
+  font-size: 0.7rem;
+}
+.test-progress {
+  width: min(100%, 700px);
+  height: 3px;
+  margin: 25px 0 45px;
+  background: var(--navy-800);
+}
+.test-progress span {
+  display: block;
+  height: 100%;
+  background: var(--blue-accent);
+}
+.test-screen > main {
+  width: min(100%, 650px);
+}
+.test-screen main > span {
+  color: var(--slate-500);
+  font-size: 0.65rem;
+}
+.test-screen main h2 {
+  margin: 18px 0 28px;
+  font-size: 1.5rem;
+  line-height: 1.35;
+}
+.test-options {
+  display: grid;
+  gap: 9px;
+}
+.test-options button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid var(--border-soft);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--slate-300);
+  text-align: left;
+}
+.test-options button i {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--slate-500);
+  border-radius: 50%;
+}
+.test-options button.is-selected {
+  border-color: var(--blue-accent);
+  background: rgba(201, 125, 74, 0.1);
+}
+.test-options button.is-selected i {
+  border: 4px solid var(--blue-accent);
+}
+.test-next {
+  display: block;
+  margin: 25px 0 0 auto;
+}
+.test-next:disabled {
+  opacity: 0.3;
+}
+.test-screen > footer {
+  margin-top: 40px;
+  color: var(--slate-500);
+  font-size: 0.65rem;
+}
+.test-result {
+  align-items: stretch;
+  width: min(100%, 760px);
+  margin: auto;
+}
+.test-result h1 {
+  font-size: 4rem;
+  color: var(--blue-accent-bright);
+}
+.test-result > section {
+  display: grid;
+  gap: 8px;
+  margin: 25px 0;
+}
+.test-result section > div {
+  padding: 14px;
+  border-left: 3px solid #78a47d;
+  background: var(--navy-800);
+}
+.test-result section > div.is-wrong {
+  border-color: #bb725d;
+}
+.test-result section p,
+.test-result section small {
+  font-size: 0.72rem;
+}
+.test-result section small {
+  color: var(--slate-400);
+}
+.test-result__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.test-result__actions > button {
+  padding: 9px 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--slate-300);
+}
+@media (max-width: 600px) {
+  .conversation-mode {
+    padding: 14px;
+  }
+  .conversation-mode > header {
+    grid-template-columns: 55px 1fr 55px;
+  }
+  .conversation-mode main {
+    padding-inline: 0;
+  }
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
+  .test-screen {
+    padding: 20px;
+  }
+  .test-screen main h2 {
+    font-size: 1.25rem;
+  }
+}

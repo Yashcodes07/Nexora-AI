@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { getDashboardSection } from "../api/auth.js";
 import "./Dashboard.css";
 import "./LearningSpace.css";
+import LearningModeSession from "./LearningModeSession.jsx";
 
 const MODES = [
-  ["viva", "Viva mode", "Practice with spoken-style questions and answers."],
-  ["discussion", "Group discussion mode", "Explore a topic through multiple viewpoints."],
-  ["test", "Test mode", "Turn your study material into a structured assessment."],
+  ["viva", "Viva mode", "Practice answering questions aloud."],
+  ["discussion", "GD mode", "Build confidence, reasoning, and communication."],
+  ["test", "Test mode", "Test yourself, find gaps, and learn from mistakes."],
 ];
 
 export default function LearningSpace() {
@@ -18,6 +19,9 @@ export default function LearningSpace() {
   const [chatHistory, setChatHistory] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(true);
+  const [sessionMode, setSessionMode] = useState(null);
+  const [pendingMode, setPendingMode] = useState(null);
+  const [modeTopic, setModeTopic] = useState("");
   const fileInput = useRef(null);
   const settings = useRef(null);
 
@@ -33,6 +37,8 @@ export default function LearningSpace() {
   function submitPrompt(event) {
     event.preventDefault();
     if (!prompt.trim() && !attachment) return;
+    const activeMode = Object.entries(modes).find(([, enabled]) => enabled)?.[0];
+    if (activeMode) { setSessionMode(activeMode); return; }
     const title = prompt.trim() || `Study ${attachment.name}`;
     const chat = { id: Date.now(), title, prompt };
     setChatHistory((current) => [chat, ...current]);
@@ -44,8 +50,12 @@ export default function LearningSpace() {
     setPrompt(""); setAttachment(null); setNotice(""); setActiveChat(null);
   }
 
+  function closeMode() { setSessionMode(null); setPendingMode(null); setModes({ viva: false, discussion: false, test: false }); }
+  if (sessionMode) return <LearningModeSession mode={sessionMode} topic={modeTopic || prompt.trim() || attachment?.name || "Your selected topic"} onExit={closeMode} onLearn={(revisionPrompt) => { setPrompt(revisionPrompt); closeMode(); }} />;
+
   return (
     <div className="dashboard learning-chat">
+      {pendingMode && <div className="mode-setup" role="dialog" aria-modal="true"><form onSubmit={(event) => { event.preventDefault(); if (!modeTopic.trim()) return; setPrompt(modeTopic.trim()); setPendingMode(null); setSessionMode(pendingMode); }}><button className="mode-setup__close" type="button" onClick={closeMode}>×</button><span className="eyebrow">{pendingMode === "viva" ? "Viva mode" : pendingMode === "discussion" ? "Group discussion" : "Test mode"}</span><h2>What topic would you like to {pendingMode === "viva" ? "practise" : pendingMode === "discussion" ? "discuss" : "be tested on"}?</h2><p>{pendingMode === "viva" ? "Nexora will become your examiner and read each question aloud." : pendingMode === "discussion" ? "Nexora will create participants with different viewpoints." : "Nexora will create a focused test around your topic."}</p><input autoFocus value={modeTopic} onChange={(event) => setModeTopic(event.target.value)} placeholder="Enter a topic" /><button className="btn btn-primary" type="submit" disabled={!modeTopic.trim()}>Continue →</button></form></div>}
       <div className="learning-chat__orb learning-chat__orb--one" aria-hidden="true" />
       <div className="learning-chat__orb learning-chat__orb--two" aria-hidden="true" />
       <div className={`learning-chat__layout ${historyOpen ? "has-history" : "history-collapsed"}`}>
@@ -96,7 +106,7 @@ export default function LearningSpace() {
                 </button>
                 {settingsOpen && <div className="mode-menu">
                   <div className="mode-menu__header"><div><strong>Study modes</strong><span>Shape your learning session</span></div></div>
-                  {MODES.map(([key, label, description]) => <div className="mode-menu__item" key={key}><div><strong>{label}</strong><p>{description}</p></div><button type="button" className={`switch ${modes[key] ? "is-on" : ""}`} onClick={() => setModes((current) => ({ ...current, [key]: !current[key] }))} role="switch" aria-checked={modes[key]}><span /></button></div>)}
+                  {MODES.map(([key, label, description]) => <div className="mode-menu__item" key={key}><div><strong>{label}</strong><p>{description}</p></div><button type="button" className={`switch ${modes[key] ? "is-on" : ""}`} onClick={() => { const enabling = !modes[key]; setModes({ viva: false, discussion: false, test: false, [key]: enabling }); setSettingsOpen(false); setModeTopic(prompt.trim()); if (enabling) setPendingMode(key); }} role="switch" aria-checked={modes[key]}><span /></button></div>)}
                 </div>}
               </div>
               <span className="composer__hint">Attach notes or choose a study mode</span>
