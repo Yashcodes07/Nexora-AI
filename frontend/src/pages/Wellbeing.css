@@ -1,0 +1,398 @@
+.wellbeing {
+  position: relative;
+  flex: 1;
+  min-height: calc(100vh - 64px);
+  overflow: hidden;
+  background: linear-gradient(135deg, #152a21 0%, #0c1b15 56%, #101e18 100%);
+}
+.wellbeing__light {
+  position: absolute;
+  top: -20%;
+  right: 8%;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  background: rgba(210, 145, 92, 0.1);
+  filter: blur(90px);
+  pointer-events: none;
+}
+.ambient {
+  position: absolute;
+  z-index: 5;
+  top: 22px;
+  right: 32px;
+  width: 190px;
+  padding: 10px 12px;
+  border: 1px solid rgba(244, 239, 228, 0.1);
+  border-radius: 12px;
+  background: rgba(11, 23, 18, 0.5);
+  color: var(--slate-400);
+}
+.ambient__title,
+.ambient__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ambient__title {
+  justify-content: flex-start;
+  gap: 7px;
+}
+.ambient__title strong {
+  color: var(--slate-300);
+  font-size: 0.69rem;
+  font-weight: 600;
+}
+.ambient svg {
+  width: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+.ambient input[type="range"] {
+  width: 100%;
+  height: 3px;
+  margin: 10px 0 8px;
+  accent-color: var(--blue-accent-bright);
+}
+.ambient__meta span {
+  color: var(--slate-500);
+  font-size: 0.6rem;
+}
+.ambient__meta button {
+  padding: 3px 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--slate-400);
+  font-size: 0.59rem;
+  font-weight: 700;
+}
+.ambient.is-on {
+  border-color: rgba(226, 160, 106, 0.35);
+  color: var(--blue-accent-bright);
+}
+.ambient.is-on .ambient__meta button {
+  border-color: rgba(226, 160, 106, 0.4);
+  background: rgba(201, 125, 74, 0.12);
+  color: var(--blue-accent-bright);
+}
+.wellbeing__welcome {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 680px) minmax(280px, 430px);
+  align-items: center;
+  justify-content: center;
+  gap: clamp(45px, 7vw, 110px);
+  width: 100%;
+  max-width: 1320px;
+  min-height: calc(100vh - 64px);
+  margin: auto;
+  padding: 60px 40px 48px;
+}
+.wellbeing__eyebrow {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--blue-accent-bright);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.wellbeing__copy > h1 {
+  font-size: clamp(2.5rem, 4.5vw, 4.5rem);
+  font-weight: 400;
+  line-height: 1.04;
+}
+.wellbeing__copy > h1 em {
+  color: #e1a06d;
+  font-style: italic;
+  font-weight: 400;
+}
+.wellbeing__comfort {
+  margin: 18px 0 30px;
+  font-size: 0.91rem;
+  line-height: 1.65;
+}
+.mood-card {
+  padding: 22px;
+  border: 1px solid rgba(244, 239, 228, 0.1);
+  border-radius: 18px;
+  background: rgba(31, 54, 43, 0.74);
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.17);
+}
+.mood-card__heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+}
+.mood-card__heading h2 {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+.mood-card__heading p {
+  margin-top: 4px;
+  font-size: 0.75rem;
+}
+.mood-card__heading > span {
+  padding: 5px 8px;
+  border-radius: 12px;
+  background: rgba(226, 160, 106, 0.08);
+  color: var(--slate-400);
+  font-size: 0.6rem;
+  white-space: nowrap;
+}
+.moods {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+  margin: 18px 0;
+}
+.moods button {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 5px;
+  border: 1px solid var(--border-soft);
+  border-radius: 11px;
+  background: rgba(11, 23, 18, 0.5);
+  color: var(--slate-400);
+}
+.moods button:hover,
+.moods button.is-selected {
+  border-color: rgba(226, 160, 106, 0.45);
+  background: rgba(201, 125, 74, 0.11);
+  color: var(--white);
+}
+.moods button > span {
+  font-size: 1.35rem;
+  filter: saturate(0.75);
+}
+.moods strong {
+  font-size: 0.7rem;
+}
+.wellbeing__start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px;
+  border: 0;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #bd7547, #df9f6b);
+  color: #102019;
+  font-size: 0.79rem;
+  font-weight: 700;
+}
+.wellbeing__start span {
+  font-size: 1rem;
+}
+.wellbeing__private {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 0.62rem;
+}
+.calm-scene {
+  align-self: center;
+  margin: 72px 0 0;
+}
+.calm-scene svg {
+  width: 100%;
+  max-height: 570px;
+  filter: drop-shadow(0 30px 45px rgba(0, 0, 0, 0.25));
+}
+.calm-scene > p {
+  margin-top: 8px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+.checkin-chat {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  width: min(100% - 40px, 880px);
+  height: calc(100vh - 104px);
+  margin: 20px auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 22px;
+  background: rgba(18, 38, 30, 0.8);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.22);
+}
+.checkin-chat__header {
+  display: grid;
+  grid-template-columns: 100px 1fr 100px;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: center;
+}
+.checkin-chat__header button {
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: var(--slate-400);
+  font-size: 0.72rem;
+}
+.checkin-chat__header > div > span {
+  color: var(--blue-accent-bright);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.checkin-chat__header h1 {
+  margin-top: 3px;
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+.checkin-chat__mood {
+  justify-self: end;
+  font-size: 1.25rem;
+}
+.checkin-chat__messages {
+  overflow-y: auto;
+  padding: 30px clamp(20px, 7vw, 70px);
+}
+.checkin-chat__day {
+  margin-bottom: 30px;
+  color: var(--slate-500);
+  font-size: 0.62rem;
+  text-align: center;
+}
+.checkin-message {
+  display: flex;
+  align-items: flex-end;
+  gap: 9px;
+  margin-bottom: 18px;
+}
+.checkin-message p {
+  max-width: 76%;
+  padding: 12px 15px;
+  border-radius: 15px;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.checkin-message--nexora p {
+  border-bottom-left-radius: 4px;
+  background: #233e31;
+  color: var(--slate-300);
+}
+.checkin-message--user {
+  justify-content: flex-end;
+}
+.checkin-message--user p {
+  border-bottom-right-radius: 4px;
+  background: rgba(201, 125, 74, 0.18);
+  color: var(--white);
+}
+.checkin-message__mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(226, 160, 106, 0.3);
+  border-radius: 50%;
+  color: var(--blue-accent-bright);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+}
+.checkin-composer {
+  margin: 0 20px 20px;
+  padding: 5px;
+  border: 1px solid rgba(226, 160, 106, 0.25);
+  border-radius: 13px;
+  background: #0f2119;
+}
+.checkin-composer textarea {
+  display: block;
+  width: 100%;
+  padding: 12px 13px 5px;
+  resize: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--white);
+  font: 0.82rem/1.5 var(--font-body);
+}
+.checkin-composer textarea::placeholder {
+  color: var(--slate-500);
+}
+.checkin-composer > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 7px;
+}
+.checkin-composer > div > span {
+  color: var(--slate-500);
+  font-size: 0.6rem;
+}
+.checkin-composer button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--blue-accent);
+  color: #102019;
+  font-size: 1rem;
+}
+.checkin-composer button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+@media (max-width: 900px) {
+  .wellbeing__welcome {
+    grid-template-columns: 1fr;
+    max-width: 700px;
+    padding-top: 75px;
+  }
+  .calm-scene {
+    display: none;
+  }
+}
+@media (max-width: 560px) {
+  .ambient {
+    top: 12px;
+    right: 14px;
+  }
+  .ambient span {
+    display: none;
+  }
+  .wellbeing__welcome {
+    padding: 68px 16px 30px;
+  }
+  .wellbeing__copy > h1 {
+    font-size: 2.5rem;
+  }
+  .mood-card {
+    padding: 17px;
+  }
+  .moods {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .checkin-chat {
+    width: 100%;
+    height: calc(100vh - 64px);
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  .checkin-chat__header {
+    grid-template-columns: 60px 1fr 60px;
+    padding: 14px 12px;
+  }
+  .checkin-chat__messages {
+    padding: 25px 16px;
+  }
+  .checkin-composer {
+    margin: 0 12px 12px;
+  }
+}

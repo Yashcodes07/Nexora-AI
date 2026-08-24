@@ -15,6 +15,7 @@ import { FeatureDashboard } from "./pages/Dashboard.jsx";
 import Settings from "./pages/Settings.jsx";
 import PreferencesOnboarding from "./pages/PreferencesOnboarding.jsx";
 import LearningSpace from "./pages/LearningSpace.jsx";
+import Wellbeing from "./pages/Wellbeing.jsx";
 
 export default function App() {
   const location = useLocation();
@@ -33,7 +34,7 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/learning-space" element={protectedPage(<LearningSpace />)} />
-          <Route path="/wellbeing" element={protectedPage(<FeatureDashboard section="wellbeing" />)} />
+          <Route path="/wellbeing" element={protectedPage(<Wellbeing />)} />
           <Route path="/ai-scheduler" element={protectedPage(<FeatureDashboard section="ai-scheduler" />)} />
           <Route path="/settings" element={protectedPage(<Settings />)} />
           <Route path="/preferences" element={protectedPage(<PreferencesOnboarding />)} />
