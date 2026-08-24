@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { getDashboardSection } from "../api/auth.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import "./Wellbeing.css";
+import { wellbeingReply } from "../api/ai.js";
 
 const MOODS = [
   ["good", "Good", "😊"],
@@ -94,11 +95,15 @@ export default function Wellbeing() {
     setCheckingIn(true);
   }
 
-  function sendMessage(event) {
+  async function sendMessage(event) {
     event.preventDefault();
     if (!message.trim()) return;
-    setMessages((current) => [...current, { id: Date.now(), from: "user", text: message.trim() }]);
+    const userMessage = message.trim();
+    const history = messages.map((item) => ({ role: item.from === "user" ? "user" : "assistant", content: item.text }));
+    setMessages((current) => [...current, { id: Date.now(), from: "user", text: userMessage }]);
     setMessage("");
+    try { const result = await wellbeingReply(userMessage, history); setMessages((current) => [...current, { id: Date.now() + 1, from: "nexora", text: result.reply }]); }
+    catch { setMessages((current) => [...current, { id: Date.now() + 1, from: "nexora", text: "I’m still here with you. We can pause, or continue whenever you feel ready." }]); }
   }
 
   const firstName = (user.full_name || user.email.split("@")[0]).split(" ")[0];

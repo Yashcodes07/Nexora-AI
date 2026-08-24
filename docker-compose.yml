@@ -25,11 +25,19 @@ services:
     environment:
       PROJECT_NAME: Nexora AI
       DATABASE_URL: postgresql://nexora-ai:nexora-ai@postgres:5432/nexora-ai
-      SECRET_KEY: ${SECRET_KEY:-change-this-secret-before-production}
       BACKEND_CORS_ORIGINS: '["http://localhost:3000"]'
       FRONTEND_URL: http://localhost:3000
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
+      HF_TUTOR_MODEL: ${HF_TUTOR_MODEL:-Qwen/Qwen3-4B-Instruct-2507}
+      HF_TUTOR_TOKEN: ${HF_TUTOR_TOKEN:-}
+      HF_WELLBEING_MODEL: ${HF_WELLBEING_MODEL:-Qwen/Qwen3-4B-Instruct-2507}
+      HF_WELLBEING_TOKEN: ${HF_WELLBEING_TOKEN:-}
+      HF_SCHEDULER_MODEL: ${HF_SCHEDULER_MODEL:-Qwen/Qwen3-4B-Instruct-2507}
+      HF_SCHEDULER_TOKEN: ${HF_SCHEDULER_TOKEN:-}
+      HF_SPEECH_TOKEN: ${HF_SPEECH_TOKEN:-}
+      HF_TTS_TOKEN: ${HF_TTS_TOKEN:-}
+      HF_EMBEDDING_TOKEN: ${HF_EMBEDDING_TOKEN:-}
     ports:
       - "8000:8000"
     depends_on:

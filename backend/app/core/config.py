@@ -9,7 +9,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     # JWT
-    SECRET_KEY: str
+    # Fixed local-demo key. Override before any public deployment.
+    SECRET_KEY: str = "nexora-local-demo-signing-key-not-for-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -26,6 +27,20 @@ class Settings(BaseSettings):
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
+
+    # Hugging Face inference (keep tokens server-side)
+    HF_TUTOR_MODEL: str = "Qwen/Qwen3-4B-Instruct-2507"
+    HF_TUTOR_TOKEN: Optional[str] = None
+    HF_WELLBEING_MODEL: str = "Qwen/Qwen3-4B-Instruct-2507"
+    HF_WELLBEING_TOKEN: Optional[str] = None
+    HF_SCHEDULER_MODEL: str = "Qwen/Qwen3-4B-Instruct-2507"
+    HF_SCHEDULER_TOKEN: Optional[str] = None
+    HF_SPEECH_MODEL: str = "openai/whisper-large-v3-turbo"
+    HF_SPEECH_TOKEN: Optional[str] = None
+    HF_TTS_MODEL: str = "hexgrad/Kokoro-82M"
+    HF_TTS_TOKEN: Optional[str] = None
+    HF_EMBEDDING_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
+    HF_EMBEDDING_TOKEN: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 

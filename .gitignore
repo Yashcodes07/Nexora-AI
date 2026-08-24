@@ -1,4 +1,8 @@
 # Frontend dependencies
+.env
+.env.local
+.env.*.local
+*.pdf
 frontend/node_modules/
 .DS_Store
 

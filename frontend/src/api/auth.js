@@ -85,7 +85,7 @@ async function refreshAccessToken(tokens) {
   return parseResponse(response);
 }
 
-export async function authenticatedRequest(path, options = {}) {
+export async function authenticatedResponse(path, options = {}) {
   let tokens = getTokens();
   if (!tokens) throw new Error("You need to log in first.");
 
@@ -111,7 +111,11 @@ export async function authenticatedRequest(path, options = {}) {
     }
   }
 
-  return parseResponse(response);
+  return response;
+}
+
+export async function authenticatedRequest(path, options = {}) {
+  return parseResponse(await authenticatedResponse(path, options));
 }
 
 export function getDashboardSection(section = "") {
