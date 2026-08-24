@@ -3,6 +3,7 @@ import { getDashboardSection } from "../api/auth.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import "./Wellbeing.css";
 import { wellbeingReply } from "../api/ai.js";
+import { MarkdownContent } from "../components/AdaptiveAnswer.jsx";
 
 const MOODS = [
   ["good", "Good", "😊"],
@@ -146,7 +147,7 @@ export default function Wellbeing() {
           <header className="checkin-chat__header"><button type="button" onClick={() => setCheckingIn(false)}>← Back</button><div><span>Private check-in</span><h1>Take your time, {firstName}.</h1></div><span className="checkin-chat__mood">{MOODS.find(([value]) => value === mood)?.[2]}</span></header>
           <section className="checkin-chat__messages" aria-live="polite">
             <div className="checkin-chat__day">A quiet space · Just for you</div>
-            {messages.map((item) => <div className={`checkin-message checkin-message--${item.from}`} key={item.id}>{item.from === "nexora" && <span className="checkin-message__mark"><img src="/nexora-mark.png" alt="" /></span>}<p>{item.text}</p></div>)}
+            {messages.map((item) => <div className={`checkin-message checkin-message--${item.from}`} key={item.id}>{item.from === "nexora" && <span className="checkin-message__mark"><img src="/nexora-mark.png" alt="" /></span>}{item.from === "nexora" ? <MarkdownContent content={item.text} className="checkin-message__body" /> : <p>{item.text}</p>}</div>)}
           </section>
           <form className="checkin-composer" onSubmit={sendMessage}><textarea rows="2" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Share only what feels comfortable..." aria-label="Your check-in message" /><div><span>There is no right or wrong answer.</span><button type="submit" disabled={!message.trim()} aria-label="Send message">↑</button></div></form>
         </main>

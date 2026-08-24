@@ -3,16 +3,21 @@ import { Fragment, lazy, Suspense } from "react";
 const VisualRenderer = lazy(() => import("./VisualRenderer.jsx"));
 
 function inlineMarkdown(text) {
-  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+  const parts = String(text ?? "").split(/(`[^`\n]+`|\*\*\*[^*\n]+\*\*\*|___[^_\n]+___|\*\*[^*\n]+\*\*|__[^_\n]+__|~~[^~\n]+~~|\*[^*\n]+\*|_[^_\n]+_|\[[^\]\n]+\]\(https?:\/\/[^)\s]+\))/g);
   return parts.map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**")) return <strong key={index}>{part.slice(2, -2)}</strong>;
     if (part.startsWith("`") && part.endsWith("`")) return <code key={index}>{part.slice(1, -1)}</code>;
+    if ((part.startsWith("***") && part.endsWith("***")) || (part.startsWith("___") && part.endsWith("___"))) return <strong key={index}><em>{part.slice(3, -3)}</em></strong>;
+    if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("__") && part.endsWith("__"))) return <strong key={index}>{inlineMarkdown(part.slice(2, -2))}</strong>;
+    if (part.startsWith("~~") && part.endsWith("~~")) return <del key={index}>{inlineMarkdown(part.slice(2, -2))}</del>;
+    if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_"))) return <em key={index}>{part.slice(1, -1)}</em>;
+    const link = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
+    if (link) return <a key={index} href={link[2]} target="_blank" rel="noreferrer">{link[1]}</a>;
     return <Fragment key={index}>{part}</Fragment>;
   });
 }
 
-function MarkdownContent({ content }) {
-  const lines = content.split("\n");
+export function MarkdownContent({ content, className = "" }) {
+  const lines = String(content ?? "").replace(/\r\n?/g, "\n").split("\n");
   const output = [];
   let list = [];
   let ordered = false;
@@ -26,6 +31,15 @@ function MarkdownContent({ content }) {
     const raw = lines[index];
     const line = raw.trim();
     const next = lines[index + 1]?.trim() || "";
+    if (line.startsWith("```")) {
+      flushList();
+      const language = line.slice(3).trim();
+      const code = [];
+      index += 1;
+      while (index < lines.length && !lines[index].trim().startsWith("```")) { code.push(lines[index]); index += 1; }
+      output.push(<pre key={`code-${index}`} data-language={language || undefined}><code>{code.join("\n")}</code></pre>);
+      continue;
+    }
     if (line.includes("|") && /^\|?\s*:?-{3,}/.test(next)) {
       flushList();
       const cells = (value) => value.replace(/^\||\|$/g, "").split("|").map((cell) => cell.trim());
@@ -45,6 +59,7 @@ function MarkdownContent({ content }) {
     }
     flushList();
     if (!line) continue;
+    if (/^(?:-{3,}|\*{3,}|_{3,})$/.test(line)) { output.push(<hr key={index} />); continue; }
     const heading = line.match(/^(#{1,4})\s+(.+)/);
     if (heading) {
       const Tag = `h${Math.min(heading[1].length + 2, 5)}`;
@@ -53,7 +68,7 @@ function MarkdownContent({ content }) {
     else output.push(<p key={index}>{inlineMarkdown(line)}</p>);
   }
   flushList();
-  return output;
+  return <div className={`markdown-content ${className}`.trim()}>{output}</div>;
 }
 
 export default function AdaptiveAnswer({ content, preferences, visual, presentationMode, complete = true }) {

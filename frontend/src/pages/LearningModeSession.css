@@ -68,7 +68,8 @@
   color: var(--blue-accent-bright);
   font-size: 0.65rem;
 }
-.mode-message p {
+.mode-message > p,
+.mode-message > .mode-message__body {
   max-width: 75%;
   padding: 11px 14px;
   border-radius: 13px;
@@ -85,6 +86,7 @@
 .mode-message--you p {
   background: rgba(201, 125, 74, 0.16);
 }
+.mode-message__body p { max-width: none; padding: 0; border-radius: 0; background: transparent; }
 .conversation-mode > form {
   padding: 6px;
   border: 1px solid rgba(226, 160, 106, 0.25);
