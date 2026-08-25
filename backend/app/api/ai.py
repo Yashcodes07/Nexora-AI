@@ -1,15 +1,20 @@
 import json
 import re
+import uuid
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Any, Literal
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.deps import get_current_active_user
+from app.db.session import get_db
 from app.models.user import User
+from app.models.study_plan import StudyPlan
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -39,6 +44,30 @@ class SchedulerRequest(BaseModel):
     purpose: str | None = Field(default=None, max_length=300)
     history: list[Message] = Field(default_factory=list, max_length=30)
     existing_events: list[dict[str, Any]] = Field(default_factory=list, max_length=100)
+
+class SyllabusPlanRequest(BaseModel):
+    subject: str = Field(min_length=2, max_length=255)
+    syllabus: str = Field(min_length=10, max_length=20000)
+    target_date: date
+    daily_minutes: int = Field(default=60, ge=15, le=720)
+
+class StudyTopicSpec(BaseModel):
+    unit: str = Field(min_length=1, max_length=160)
+    title: str = Field(min_length=1, max_length=200)
+    description: str = Field(default="", max_length=500)
+    estimated_minutes: int = Field(default=40, ge=15, le=180)
+    difficulty: Literal["easy", "medium", "hard"] = "medium"
+    prerequisites: list[str] = Field(default_factory=list, max_length=10)
+
+class ExtractedSyllabus(BaseModel):
+    subject: str
+    topics: list[StudyTopicSpec] = Field(min_length=1, max_length=100)
+
+class TaskStatusRequest(BaseModel):
+    completed: bool
+
+class AdjustPlanRequest(BaseModel):
+    instruction: str = Field(min_length=3, max_length=1000)
 
 VisualType = Literal["algorithm", "process", "architecture", "neural_network", "math", "timeline", "comparison", "tree_graph", "code_execution", "illustration"]
 
@@ -176,6 +205,13 @@ def parse_json(text: str | None, fallback: Any) -> Any:
     except json.JSONDecodeError:
         return fallback
 
+def viva_question_only(text: str | None, fallback: str) -> str:
+    if not text:
+        return fallback
+    cleaned = re.sub(r"[`*_#>]", "", text).replace("\n", " ").strip()
+    questions = re.findall(r"(?:^|(?<=[.!]))\s*([^.!?]{1,300}\?)", cleaned)
+    return questions[-1].strip() if questions else fallback
+
 def validated_visual(text: str | None) -> dict[str, Any]:
     fallback = VisualSpec().model_dump()
     try:
@@ -286,22 +322,26 @@ Always include title, one-sentence summary, concept, teaching_strategy, notice (
 
 @router.post("/viva")
 async def viva(payload: ChatRequest, user: User = Depends(get_current_active_user)):
-    system = f"""You are conducting a live oral viva on {payload.topic}. Remain an examiner, not a tutor. Output exactly one concise, speech-friendly question and nothing else. Never give the answer, teach the topic, score the learner, or give feedback during the active viva.
-For a start action, ask one clear opening conceptual question. For a response action, evaluate the learner's exact answer internally: if strong, probe a deeper implication; if partial, question the missing part; if incorrect, challenge the specific claim with a simpler question; if they do not know, guide them using a narrower question without revealing the answer. Refer to a specific claim they made whenever possible. Do not repeat prior questions.
-{learner_context(user)}"""
+    system = f"""You are conducting a live oral viva on {payload.topic}. Remain strictly an examiner, never a tutor. For a start action, ask one clear opening conceptual question. For every response action, use the immediately preceding examiner question and the learner's latest answer together. Ask a single follow-up that tests, challenges, narrows, clarifies, or deepens that answer. If the answer is incomplete or incorrect, ask a simpler diagnostic question without disclosing what was wrong or revealing any part of the answer. Do not change to an unrelated area unless the previous exchange is complete. Do not repeat prior questions.
+{learner_context(user)}
+ABSOLUTE VIVA OUTPUT RULES: Output exactly one concise, speech-friendly question ending with a question mark, and nothing else. Never explain the topic. Never state facts about the topic. Never supply an answer or hint containing the answer. Never say good, correct, incorrect, almost, well done, or give any feedback, score, transition, preface, acknowledgement, summary, or teaching. The entire response must be the question alone."""
     request = "Start the viva now." if payload.session_action == "start" else payload.message
     text = await hf_chat(settings.HF_TUTOR_MODEL, settings.HF_TUTOR_TOKEN, system, [m.model_dump() for m in payload.history] + [{"role": "user", "content": request}])
-    fallback = "Can you explain that with one concrete example?" if len(payload.message) < 40 else "Good. How does that differ from the closest related concept?"
-    return {"reply": text or fallback, "live": bool(text)}
+    fallback = "Can you explain that with one concrete example?" if len(payload.message) < 40 else "How does your answer apply in a different situation?"
+    return {"reply": viva_question_only(text, fallback), "live": bool(text)}
 
 @router.post("/gd")
 async def gd(payload: ChatRequest, user: User = Depends(get_current_active_user)):
-    system = f"""Conduct a live group discussion on {payload.topic} as one realistic participant. Keep each turn under 90 words. Directly engage the learner's latest point by agreeing, challenging, adding nuance, or presenting a counterargument, then ask exactly one follow-up that requires them to defend or clarify their view. Rotate stance across turns and reference what they actually said. During the discussion, do not grade, coach, summarize performance, or provide generic feedback.
-For a start action, offer a brief opening position and ask the learner for their view.
-{learner_context(user)}"""
+    system = f"""Simulate a live three-way group discussion on {payload.topic}: the learner plus exactly two recurring participants named Asha and Rohan. Asha consistently argues FOR the motion. Rohan consistently argues AGAINST the motion. In every response, both must speak and directly cross-argue: each should challenge a concrete claim made by the other side, while also engaging the learner's latest point. Keep each speaker under 65 words. Their arguments must be distinct, realistic, evidence-oriented, and advance the debate rather than repeat it. End with exactly one pointed question to the learner that asks them to defend, choose, or refine their position. Never grade, coach, praise, or summarize the learner's performance.
+Use exactly this output format:
+**Asha — For:** her contribution
+**Rohan — Against:** his contribution
+**Question for you:** one question
+For a start action, both speakers give opposing opening positions before asking for the learner's view. {learner_context(user)}"""
     request = "Open the discussion now." if payload.session_action == "start" else payload.message
     text = await hf_chat(settings.HF_TUTOR_MODEL, settings.HF_TUTOR_TOKEN, system, [m.model_dump() for m in payload.history] + [{"role": "user", "content": request}])
-    return {"reply": text or "Participant B: I see your point, but what evidence would persuade someone who strongly disagrees?", "live": bool(text)}
+    fallback = "**Asha — For:** This motion can create meaningful benefits when applied carefully.\n\n**Rohan — Against:** Those benefits may overlook costs, trade-offs, and people who are affected differently.\n\n**Question for you:** Which side do you support, and what is your strongest reason?"
+    return {"reply": text or fallback, "live": bool(text)}
 
 async def session_report(payload: SessionReportRequest, user: User, kind: Literal["viva", "gd"]):
     criteria = "conceptual accuracy, completeness, misconceptions, confidence, and topics to revise" if kind == "viva" else "clarity, relevance, reasoning, direct engagement with opposing views, confidence, and topics to improve"
@@ -326,9 +366,83 @@ async def generate_test(payload: TestRequest, user: User = Depends(get_current_a
 
 @router.post("/wellbeing")
 async def wellbeing(payload: ChatRequest, user: User = Depends(get_current_active_user)):
-    system = f"You are a warm, calm check-in companion, not a therapist. Validate without diagnosing, avoid pressure, ask at most one gentle question, and use the person's name {user.full_name or ''} naturally. If there is imminent harm, encourage immediate local emergency/crisis help and a trusted person. {learner_context(user)}"
+    system = f"You are a warm, calm check-in companion, not a therapist. Always respond as a natural spoken conversation in short, flowing paragraphs. Never use bullet points, numbered lists, headings, checklists, or itemized advice. Validate without diagnosing, avoid pressure, ask at most one gentle question, and use the person's name {user.full_name or ''} naturally. Keep the response comfortable to hear aloud. If there is imminent harm, encourage immediate local emergency/crisis help and a trusted person in direct conversational prose. These conversational-format rules override any conflicting formatting preference. {learner_context(user)}"
     text = await hf_chat(settings.HF_WELLBEING_MODEL, settings.HF_WELLBEING_TOKEN, system, [m.model_dump() for m in payload.history] + [{"role": "user", "content": payload.message}])
     return {"reply": text or "Thank you for sharing that. You don’t need to solve it all right now—what would feel like the gentlest next step?", "live": bool(text)}
+
+def study_plan_payload(plan: StudyPlan) -> dict[str, Any]:
+    total = sum(topic.get("estimated_minutes", 40) for topic in plan.topics)
+    completed_ids = {task["topic_id"] for task in plan.tasks if task.get("status") == "completed"}
+    done = sum(topic.get("estimated_minutes", 40) for topic in plan.topics if topic["id"] in completed_ids)
+    return {"id": str(plan.id), "subject": plan.subject, "syllabus": plan.syllabus, "target_date": plan.target_date.isoformat(), "daily_minutes": plan.daily_minutes, "topics": plan.topics, "tasks": plan.tasks, "progress": {"total_topics": len(plan.topics), "completed_topics": len(completed_ids), "percentage": round(done / total * 100) if total else 0}}
+
+def fallback_topics(subject: str, syllabus: str) -> list[dict[str, Any]]:
+    parts = [re.sub(r"^[\d.)\-â€¢\s]+", "", item).strip() for item in re.split(r"[\n;,]+", syllabus)]
+    parts = list(dict.fromkeys(item for item in parts if len(item) > 2))[:40]
+    return [{"unit": item, "title": f"{item} Fundamentals", "description": f"Understand and apply the core ideas in {item}.", "estimated_minutes": 40, "difficulty": "medium", "prerequisites": []} for item in parts] or [{"unit": subject, "title": f"{subject} Fundamentals", "description": "Build the essential foundation.", "estimated_minutes": 40, "difficulty": "medium", "prerequisites": []}]
+
+def schedule_topics(topics: list[dict[str, Any]], target: date, daily_minutes: int) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    today, days, prepared, tasks, day_index, used = date.today(), max(1, (target - date.today()).days + 1), [], [], 0, 0
+    for order, raw in enumerate(topics):
+        minutes = min(max(int(raw.get("estimated_minutes", 40)), 15), min(180, daily_minutes))
+        if used and used + minutes > daily_minutes: day_index += 1; used = 0
+        day_index = min(day_index, days - 1)
+        topic_id = raw.get("id") or str(uuid.uuid4()); topic = {**raw, "id": topic_id, "order": order, "estimated_minutes": minutes}
+        start_minutes = 9 * 60 + used
+        task = {"id": str(uuid.uuid4()), "topic_id": topic_id, "title": topic["title"], "unit": topic.get("unit", ""), "scheduled_date": (today + timedelta(days=day_index)).isoformat(), "start_time": f"{start_minutes // 60:02d}:{start_minutes % 60:02d}", "end_time": f"{(start_minutes + minutes) // 60:02d}:{(start_minutes + minutes) % 60:02d}", "status": "pending", "completed_at": None, "reschedule_count": 0}
+        prepared.append(topic); tasks.append(task); used += minutes + 10
+    return prepared, tasks
+
+@router.get("/scheduler/study-plan")
+def get_study_plan(user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    plan = db.query(StudyPlan).filter(StudyPlan.user_id == user.id).order_by(StudyPlan.created_at.desc()).first()
+    return study_plan_payload(plan) if plan else None
+
+@router.post("/scheduler/study-plan")
+async def create_study_plan(payload: SyllabusPlanRequest, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    if payload.target_date < date.today(): raise HTTPException(status_code=422, detail="Choose a target date that is today or later.")
+    system = "Convert a syllabus into study-sized topics in prerequisite order. Expand broad headings. Return JSON only with subject and topics containing unit, title, description, estimated_minutes, difficulty easy|medium|hard, and prerequisites. Remove duplicates."
+    try:
+        text = await hf_chat(settings.HF_SCHEDULER_MODEL, settings.HF_SCHEDULER_TOKEN, system, [{"role": "user", "content": f"Subject: {payload.subject}\nSyllabus:\n{payload.syllabus}"}], True)
+    except HTTPException:
+        text = None
+    try: raw_topics = [topic.model_dump() for topic in ExtractedSyllabus.model_validate(parse_json(text, {})).topics]
+    except ValueError: raw_topics = fallback_topics(payload.subject, payload.syllabus)
+    topics, tasks = schedule_topics(raw_topics, payload.target_date, payload.daily_minutes)
+    plan = StudyPlan(user_id=user.id, subject=payload.subject, syllabus=payload.syllabus, target_date=payload.target_date, daily_minutes=payload.daily_minutes, topics=topics, tasks=tasks)
+    db.add(plan); db.commit(); db.refresh(plan)
+    return study_plan_payload(plan)
+
+@router.patch("/scheduler/study-plan/{plan_id}/tasks/{task_id}")
+def update_study_task(plan_id: uuid.UUID, task_id: str, payload: TaskStatusRequest, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    plan = db.query(StudyPlan).filter(StudyPlan.id == plan_id, StudyPlan.user_id == user.id).first()
+    if not plan: raise HTTPException(status_code=404, detail="Study plan not found.")
+    tasks = [dict(task) for task in plan.tasks]; task = next((item for item in tasks if item["id"] == task_id), None)
+    if not task: raise HTTPException(status_code=404, detail="Study task not found.")
+    task["status"], task["completed_at"] = ("completed", datetime.now(timezone.utc).isoformat()) if payload.completed else ("pending", None)
+    plan.tasks = tasks; db.commit(); db.refresh(plan)
+    return study_plan_payload(plan)
+
+@router.post("/scheduler/study-plan/{plan_id}/reschedule")
+def reschedule_study_plan(plan_id: uuid.UUID, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    plan = db.query(StudyPlan).filter(StudyPlan.id == plan_id, StudyPlan.user_id == user.id).first()
+    if not plan: raise HTTPException(status_code=404, detail="Study plan not found.")
+    today, tasks, moved = date.today(), [dict(task) for task in plan.tasks], []
+    for item in tasks:
+        if item["status"] != "completed" and date.fromisoformat(item["scheduled_date"]) < today:
+            candidate = min(today + timedelta(days=1), plan.target_date); item["scheduled_date"] = candidate.isoformat(); item["reschedule_count"] = item.get("reschedule_count", 0) + 1; moved.append(item)
+    plan.tasks = tasks; db.commit(); db.refresh(plan)
+    return {**study_plan_payload(plan), "rescheduled": moved, "message": "Itâ€™s alright. I moved the unfinished work into your remaining plan so you donâ€™t have to rearrange everything.", "needs_adjustment": any(item["reschedule_count"] >= 3 for item in moved)}
+
+@router.post("/scheduler/study-plan/{plan_id}/adjust")
+def adjust_study_plan(plan_id: uuid.UUID, payload: AdjustPlanRequest, user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    plan = db.query(StudyPlan).filter(StudyPlan.id == plan_id, StudyPlan.user_id == user.id).first()
+    if not plan: raise HTTPException(status_code=404, detail="Study plan not found.")
+    match = re.search(r"(\d+(?:\.\d+)?)\s*(hours?|hrs?|minutes?|mins?)", payload.instruction.lower())
+    if match: plan.daily_minutes = min(720, max(15, round(float(match.group(1)) * 60 if match.group(2).startswith("h") else float(match.group(1)))))
+    complete_ids = {task["topic_id"] for task in plan.tasks if task["status"] == "completed"}; incomplete = [topic for topic in plan.topics if topic["id"] not in complete_ids]
+    _, future = schedule_topics(incomplete, plan.target_date, plan.daily_minutes); plan.tasks = [task for task in plan.tasks if task["status"] == "completed"] + future
+    db.commit(); db.refresh(plan); return study_plan_payload(plan)
 
 @router.post("/scheduler/plan")
 async def scheduler_plan(payload: SchedulerRequest, user: User = Depends(get_current_active_user)):

@@ -6,6 +6,8 @@ import LearningModeSession from "./LearningModeSession.jsx";
 import { analyzeLearningVisual, streamLearningChat } from "../api/ai.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import AdaptiveAnswer from "../components/AdaptiveAnswer.jsx";
+import { sanitizeSpeechText, speechEnabled } from "../utils/speech.js";
+import DeepFocus from "../components/DeepFocus.jsx";
 
 const MODES = [
   ["viva", "Viva mode", "Practice answering questions aloud."],
@@ -32,6 +34,7 @@ export default function LearningSpace() {
   const [attachment, setAttachment] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [modes, setModes] = useState({ viva: false, discussion: false, test: false });
+  const [focusMode, setFocusMode] = useState(() => localStorage.getItem(`nexora-focus-active:${user?.id || "guest"}`) === "true");
   const [notice, setNotice] = useState("");
   const [chatHistory, setChatHistory] = useState(savedHistory);
   const [activeChat, setActiveChat] = useState(savedHistory[0]?.id || null);
@@ -56,6 +59,17 @@ export default function LearningSpace() {
     document.addEventListener("mousedown", closeSettings);
     return () => document.removeEventListener("mousedown", closeSettings);
   }, []);
+  useEffect(() => {
+    localStorage.setItem(`nexora-focus-active:${user?.id || "guest"}`, String(focusMode));
+    document.body.classList.toggle("focus-mode-active", focusMode);
+    if (!focusMode || !window.speechSynthesis || !speechEnabled()) return () => document.body.classList.remove("focus-mode-active");
+    window.speechSynthesis.cancel();
+    const announcement = new SpeechSynthesisUtterance("You have entered focus mode. This helps you learn with maximum attention");
+    announcement.rate = 0.88;
+    announcement.pitch = 1;
+    window.speechSynthesis.speak(announcement);
+    return () => { window.speechSynthesis.cancel(); document.body.classList.remove("focus-mode-active"); };
+  }, [focusMode, user?.id]);
 
   function submitPrompt(event) {
     event.preventDefault();
@@ -67,9 +81,10 @@ export default function LearningSpace() {
   }
 
   function speakAnswer(content) {
+    if (!speechEnabled()) { setNotice("Spoken voice is disabled. Use the Voice off button to enable it."); return; }
     if (!window.speechSynthesis) { setNotice("Speech playback is not supported by this browser."); return; }
     window.speechSynthesis.cancel();
-    const plainText = content.replace(/[#*_`>|]/g, " ").replace(/\s+/g, " ").trim();
+    const plainText = sanitizeSpeechText(content);
     const speech = new SpeechSynthesisUtterance(plainText);
     speech.rate = 0.9; speech.pitch = 1;
     window.speechSynthesis.speak(speech);
@@ -113,6 +128,7 @@ export default function LearningSpace() {
 
   function closeMode() { setSessionMode(null); setPendingMode(null); setModes({ viva: false, discussion: false, test: false }); }
   if (sessionMode) return <LearningModeSession mode={sessionMode} topic={modeTopic || prompt.trim() || attachment?.name || "Your selected topic"} onExit={closeMode} onLearn={(revisionPrompt) => { setPrompt(revisionPrompt); closeMode(); }} />;
+  if (focusMode) return <DeepFocus userId={user?.id} objective={prompt.trim() || chatHistory.find((chat) => chat.id === activeChat)?.title || "Master your current topic"} messages={chatMessages} sending={sending} notice={notice} onSend={(message, format = "preferences") => sendPrompt(message, format)} onExit={() => setFocusMode(false)} preferences={user?.learning_preferences} />;
 
   return (
     <div className="dashboard learning-chat">
@@ -165,13 +181,17 @@ export default function LearningSpace() {
               <button className="icon-button" type="button" onClick={() => fileInput.current?.click()} aria-label="Attach a study document" title="Attach document">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
               </button>
+              <button className="focus-entry" type="button" onClick={() => setFocusMode(true)} aria-label="Enter focus mode">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" /><circle cx="12" cy="12" r="3" /></svg>
+                <span>Focus mode</span>
+              </button>
               <div className="mode-settings" ref={settings}>
                 <button className={`icon-button ${settingsOpen ? "is-active" : ""}`} type="button" onClick={() => setSettingsOpen((open) => !open)} aria-label="Study mode settings" aria-expanded={settingsOpen} title="Study modes">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3v-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.88L4.2 7.06l2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3h4v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.6 1h.09v4H21a1.7 1.7 0 0 0-1.6 1Z" /></svg>
                 </button>
                 {settingsOpen && <div className="mode-menu">
                   <div className="mode-menu__header"><div><strong>Study modes</strong><span>Shape your learning session</span></div></div>
-                  {MODES.map(([key, label, description]) => <div className="mode-menu__item" key={key}><div><strong>{label}</strong><p>{description}</p></div><button type="button" className={`switch ${modes[key] ? "is-on" : ""}`} onClick={() => { const enabling = !modes[key]; setModes({ viva: false, discussion: false, test: false, [key]: enabling }); setSettingsOpen(false); setModeTopic(prompt.trim()); if (enabling) setPendingMode(key); }} role="switch" aria-checked={modes[key]}><span /></button></div>)}
+                  {MODES.map(([key, label, description]) => <div className="mode-menu__item" key={key}><div><strong>{label}</strong><p>{description}</p></div><button type="button" className={`switch ${(key === "focus" ? focusMode : modes[key]) ? "is-on" : ""}`} onClick={() => { if (key === "focus") { setSettingsOpen(false); setFocusMode(true); return; } const enabling = !modes[key]; setModes({ viva: false, discussion: false, test: false, [key]: enabling }); setSettingsOpen(false); setModeTopic(prompt.trim()); if (enabling) setPendingMode(key); }} role="switch" aria-checked={key === "focus" ? focusMode : Boolean(modes[key])}><span /></button></div>)}
                 </div>}
               </div>
               <span className="composer__hint">Attach notes or choose a study mode</span>
@@ -187,4 +207,23 @@ export default function LearningSpace() {
       </div>
     </div>
   );
+}
+
+export function FocusLearningSpace({ messages, prompt, setPrompt, sending, notice, onSend, onExit, preferences }) {
+  const conversationEnd = useRef(null);
+  useEffect(() => { conversationEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
+  function submit(event) {
+    event.preventDefault();
+    const message = prompt.trim();
+    if (message && !sending) onSend(message);
+  }
+  return <div className="focus-space">
+    <header className="focus-space__topbar"><div><i aria-hidden="true" /><span>Focus mode</span></div><button type="button" onClick={onExit}>Exit focus mode</button></header>
+    <main className="focus-space__main">
+      {messages.length === 0 && <section className="focus-space__welcome"><span>Quiet learning</span><h1>One idea at a time.</h1><p>Ask what you want to understand. Everything else can wait.</p></section>}
+      {messages.length > 0 && <section className="focus-space__conversation" aria-live="polite">{messages.map((message, index) => <article className={`focus-space__message focus-space__message--${message.role}`} key={index}>{message.role === "assistant" ? <AdaptiveAnswer content={message.content} preferences={preferences} visual={null} presentationMode="preferences" complete={!sending || index < messages.length - 1} /> : <p>{message.content}</p>}</article>)}{sending && messages.at(-1)?.role !== "assistant" && <div className="focus-space__thinking">Thinking quietly…</div>}<div ref={conversationEnd} /></section>}
+      <form className="focus-space__composer" onSubmit={submit}><textarea autoFocus value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder="What would you like to understand?" rows="2" /><button type="submit" disabled={sending || !prompt.trim()}>{sending ? "Thinking…" : "Ask"}</button></form>
+      {notice && <p className="focus-space__notice" role="status">{notice}</p>}
+    </main>
+  </div>;
 }

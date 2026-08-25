@@ -16,6 +16,7 @@ import PreferencesOnboarding from "./pages/PreferencesOnboarding.jsx";
 import LearningSpace from "./pages/LearningSpace.jsx";
 import Wellbeing from "./pages/Wellbeing.jsx";
 import AIScheduler from "./pages/AIScheduler.jsx";
+import VoiceControl from "./components/VoiceControl.jsx";
 
 export default function App() {
   const location = useLocation();
@@ -24,6 +25,7 @@ export default function App() {
   return (
     <>
       <Navbar />
+      {appRoute && <VoiceControl />}
       <main style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <Routes>
           <Route path="/" element={<Home />} />

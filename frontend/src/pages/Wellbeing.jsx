@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import "./Wellbeing.css";
 import { wellbeingReply } from "../api/ai.js";
 import { MarkdownContent } from "../components/AdaptiveAnswer.jsx";
+import { sanitizeSpeechText, speechEnabled } from "../utils/speech.js";
 
 const MOODS = [
   ["good", "Good", "😊"],
@@ -30,7 +31,16 @@ export default function Wellbeing() {
   const audioRef = useRef(null);
 
   useEffect(() => { getDashboardSection("wellbeing").catch(() => {}); }, []);
-  useEffect(() => () => stopAmbience(), []);
+  useEffect(() => () => { stopAmbience(); window.speechSynthesis?.cancel(); }, []);
+
+  function speak(text) {
+    if (!speechEnabled() || !window.speechSynthesis || !text) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(sanitizeSpeechText(text));
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  }
 
   function startAmbience() {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -91,9 +101,11 @@ export default function Wellbeing() {
 
   function beginCheckIn() {
     const selectedMood = mood || "okay";
+    const opener = OPENERS[selectedMood];
     setMood(selectedMood);
-    setMessages([{ id: 1, from: "nexora", text: OPENERS[selectedMood] }]);
+    setMessages([{ id: 1, from: "nexora", text: opener }]);
     setCheckingIn(true);
+    speak(opener);
   }
 
   async function sendMessage(event) {
@@ -103,7 +115,7 @@ export default function Wellbeing() {
     const history = messages.map((item) => ({ role: item.from === "user" ? "user" : "assistant", content: item.text }));
     setMessages((current) => [...current, { id: Date.now(), from: "user", text: userMessage }]);
     setMessage("");
-    try { const result = await wellbeingReply(userMessage, history); setMessages((current) => [...current, { id: Date.now() + 1, from: "nexora", text: result.reply }]); }
+    try { const result = await wellbeingReply(userMessage, history); setMessages((current) => [...current, { id: Date.now() + 1, from: "nexora", text: result.reply }]); speak(result.reply); }
     catch { setMessages((current) => [...current, { id: Date.now() + 1, from: "nexora", text: "I’m still here with you. We can pause, or continue whenever you feel ready." }]); }
   }
 

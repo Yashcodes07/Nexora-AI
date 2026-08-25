@@ -39,3 +39,8 @@ export const sessionReport = (mode, topic, history = []) => post(`/${mode}/repor
 export const generateTest = (topic, count = 5) => post("/test/generate", { topic, count });
 export const wellbeingReply = (message, history = []) => post("/wellbeing", { message, history });
 export const planSchedule = (prompt, deadline, purpose, history = [], existingEvents = []) => post("/scheduler/plan", { prompt, deadline, purpose, history, existing_events: existingEvents });
+export const getStudyPlan = () => authenticatedRequest("/api/ai/scheduler/study-plan");
+export const createStudyPlan = (subject, syllabus, targetDate, dailyMinutes) => post("/scheduler/study-plan", { subject, syllabus, target_date: targetDate, daily_minutes: dailyMinutes });
+export const setStudyTaskComplete = (planId, taskId, completed) => authenticatedRequest(`/api/ai/scheduler/study-plan/${planId}/tasks/${taskId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ completed }) });
+export const rescheduleStudyPlan = (planId) => post(`/scheduler/study-plan/${planId}/reschedule`, {});
+export const adjustStudyPlan = (planId, instruction) => post(`/scheduler/study-plan/${planId}/adjust`, { instruction });

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./LearningModeSession.css";
 import { MarkdownContent } from "../components/AdaptiveAnswer.jsx";
 import { gdReply, generateTest, sessionReport, vivaReply } from "../api/ai.js";
+import { sanitizeSpeechText, speechEnabled } from "../utils/speech.js";
 
 const TEST_QUESTIONS = [
   { question: "Which data structure is best suited for implementing a priority queue?", options: ["Stack", "Queue", "Heap", "Linked List"], answer: "Heap", concept: "Heaps" },
@@ -24,9 +25,9 @@ function ConversationSession({ mode, topic, onExit }) {
   const [reportLoading, setReportLoading] = useState(false);
   const [listening, setListening] = useState(false);
   function speak(text, interrupt = true) {
-    if (!viva || !window.speechSynthesis || !text) return;
+    if (!viva || !speechEnabled() || !window.speechSynthesis || !text) return;
     if (interrupt) window.speechSynthesis.cancel();
-    const speech = new SpeechSynthesisUtterance(text);
+    const speech = new SpeechSynthesisUtterance(sanitizeSpeechText(text));
     speech.rate = 0.9;
     speech.pitch = 1;
     window.speechSynthesis.speak(speech);
@@ -52,10 +53,9 @@ function ConversationSession({ mode, topic, onExit }) {
     const answer = input.trim();
     const history = messages.map((item) => ({ role: item.from === "you" ? "user" : "assistant", content: item.text }));
     setMessages((items) => [...items, { from: "you", text: answer }]);
-    speak(answer);
     setInput(""); setTurn((value) => value + 1);
     try { const result = viva ? await vivaReply(topic, answer, history) : await gdReply(topic, answer, history); setMessages((items) => [...items, { from: "nexora", text: result.reply }]); }
-    catch { setMessages((items) => [...items, { from: "nexora", text: answer.length < 35 ? "Can you give one simple example?" : "How would you respond to someone who disagrees?" }]); }
+    catch { setMessages((items) => [...items, { from: "nexora", text: viva ? (answer.length < 35 ? "Can you give one simple example?" : "How would your answer apply in a different situation?") : "**Asha — For:** Your point supports the motion, but it needs a clear real-world example.\n\n**Rohan — Against:** That claim may overlook an important cost or exception.\n\n**Question for you:** Which objection is harder for your position to answer?" }]); }
   }
 
   async function finishSession() {
@@ -72,8 +72,11 @@ function ConversationSession({ mode, topic, onExit }) {
 }
 
 function TestSession({ topic, onExit, onLearn }) {
-  const [index, setIndex] = useState(0); const [selected, setSelected] = useState(""); const [answers, setAnswers] = useState([]); const [done, setDone] = useState(false); const [questions, setQuestions] = useState(TEST_QUESTIONS);
-  useEffect(() => { generateTest(topic, 5).then((result) => { if (result.questions?.length) setQuestions(result.questions); }).catch(() => {}); }, [topic]);
+  const [index, setIndex] = useState(0); const [selected, setSelected] = useState(""); const [answers, setAnswers] = useState([]); const [done, setDone] = useState(false); const [questions, setQuestions] = useState([]); const [testLoading, setTestLoading] = useState(true); const [testError, setTestError] = useState("");
+  function loadTest() { setTestLoading(true); setTestError(""); setQuestions([]); setIndex(0); setAnswers([]); setDone(false); generateTest(topic, TEST_QUESTIONS.length + 2).then((result) => { if (!result.questions?.length) throw new Error(); setQuestions(result.questions); }).catch(() => setTestError("Nexora couldnâ€™t prepare this topic-specific test yet. Please try again.")).finally(() => setTestLoading(false)); }
+  useEffect(() => { loadTest(); }, [topic]);
+  if (testLoading) return <div className="test-screen test-loading"><button className="test-exit" onClick={onExit}>Exit test</button><div><span>Test mode</span><h1>Preparing your {topic} testâ€¦</h1><p>Nexora is creating questions specifically for this topic.</p></div></div>;
+  if (testError) return <div className="test-screen test-loading"><button className="test-exit" onClick={onExit}>Exit test</button><div><h1>Letâ€™s try that again.</h1><p>{testError}</p><button className="mode-primary" onClick={loadTest}>Retry topic test</button></div></div>;
   const question = questions[index];
   function next() { const updated = [...answers, { ...question, selected }]; setAnswers(updated); setSelected(""); if (index === questions.length - 1) setDone(true); else setIndex(index + 1); }
   if (done) { const correct = answers.filter((item) => item.selected === item.answer); const wrong = answers.filter((item) => item.selected !== item.answer); const learningTopic = wrong.length ? wrong.map((item) => item.concept).join(", ") : topic; return <div className="test-screen test-result"><span>Test result</span><h1>{correct.length} / {answers.length}</h1><p>{wrong.length ? `Needs attention: ${learningTopic}` : `You understood every question in ${topic}.`}</p><section>{answers.map((item, itemIndex) => <div className={item.selected === item.answer ? "is-correct" : "is-wrong"} key={item.question}><strong>{item.selected === item.answer ? "✓" : "×"} Question {itemIndex + 1}</strong><p>{item.question}</p>{item.selected !== item.answer && <small>Your answer: {item.selected} · Correct: {item.answer}<br />Review when this concept is preferable, not only its definition.</small>}</div>)}</section><div className="test-result__actions"><button onClick={onExit}>Finish test</button><button className="mode-primary" onClick={() => onLearn(`Teach me ${learningTopic} using short explanations and examples, then give me a quick check.`)}>{wrong.length ? "Learn this topic" : "Learn more about these topics"} →</button></div></div>; }
